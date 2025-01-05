@@ -234,3 +234,5 @@ client.on('ready', async () => {
 });
 
 client.login(process.env.BOT_TOKEN);
+
+//Made by Vanesa Smite aka Captain Eivroit - https://captaineivroit.com/
