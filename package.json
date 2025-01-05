@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "botbuilder": "^4.23.1",
+    "discord.js": "^14.17.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "lowdb": "^7.0.1",
+    "moment-timezone": "^0.5.46",
+    "mongoose": "^8.9.1",
+    "mysql2": "^3.11.5",
+    "node-schedule": "^2.1.1",
+    "sequelize": "^6.37.5"
+  }
+}
