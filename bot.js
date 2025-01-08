@@ -10,15 +10,16 @@ const client = new Client({
 const POST_TIME = '13:00'; 
 const TIMEZONE = 'America/New_York'; 
 
-
 const validCurrencies = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'CNY', 'INR', 'KRW', 'BRL', 'FEIN', 'STAR SHARDS'];
-
 
 let isMarketRunning = false;
 let stockInterval;
 let customStocks = []; // Array to store custom stocks entered by the user
+const targetChannelId = '1029914930259951689'; // Channel ID where posts will be sent (teststock and daily posts)
 
-function scheduleStockPosts(channel) {
+// Function to schedule daily stock posts at 1 PM EST
+function scheduleStockPosts() {
+    const channel = client.channels.cache.get(targetChannelId); // Get the target channel
     const now = moment().tz(TIMEZONE); 
     const [postHour, postMinute] = POST_TIME.split(':').map(Number);
     let nextPostTime = moment.tz(`${now.format('YYYY-MM-DD')} ${POST_TIME}`, TIMEZONE);
@@ -47,7 +48,6 @@ function postStockUpdate(channel) {
         return;
     }
 
- 
     const stockDate = moment().tz(TIMEZONE); // Get today's date
     const formattedDate = stockDate.format('DD/MM');
 
@@ -64,11 +64,9 @@ function postStockUpdate(channel) {
 
     const { amount, currency } = stockForToday;
 
- 
     const roleIdToPing = '1244051080699052064'; //Bot pings this role for each new post
 
-    
-    const formattedTitle = `<a:sparkle2:826557383853211709> VOTW ${stockDate.format('MMMM')} ${stockDate.format('Do')}`;
+    const formattedTitle = `VOTW ${stockDate.format('MMMM')} ${stockDate.format('Do')}`;
 
     const embed = new EmbedBuilder()
         .setTitle(formattedTitle)
@@ -76,7 +74,6 @@ function postStockUpdate(channel) {
         .setColor('#FF92C3')
         .setTimestamp();
 
-  
     channel.send({ content: `<@&${roleIdToPing}>`, embeds: [embed] });
 }
 
@@ -114,7 +111,7 @@ function startMarket(channel, customInput) {
     isMarketRunning = true;
     channel.send('Stock market has started! Posting daily custom stock values.');
     showStockList(channel); // Show the full list upon starting
-    scheduleStockPosts(channel);
+    scheduleStockPosts();
 }
 
 // Function to stop the market
@@ -172,6 +169,10 @@ client.once('ready', async () => {
             name: 'stopstock',
             description: 'Stops the stock market',
         },
+        {
+            name: 'teststock',
+            description: 'Test the stock update for today',
+        }
     ];
 
     try {
@@ -181,7 +182,6 @@ client.once('ready', async () => {
         console.error('Error registering commands:', error);
     }
 });
-
 
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isCommand()) return;
@@ -194,7 +194,7 @@ client.on('interactionCreate', async (interaction) => {
         } else {
             const input = options.getString('customstocks');
             console.log('Received input:', input); // Debugging log
-            const channel = interaction.channel;
+            const channel = interaction.channel; // Use the current channel here
             startMarket(channel, input);
             await interaction.reply('Stock market has been started with custom values!');
         }
@@ -202,37 +202,42 @@ client.on('interactionCreate', async (interaction) => {
         if (!isMarketRunning) {
             await interaction.reply('The stock market is not currently running.');
         } else {
-            stopMarket(interaction.channel);
+            const channel = interaction.channel; // Use the current channel here
+            stopMarket(channel);
             await interaction.reply('Stock market has been stopped.');
         }
     }
-});
 
-// Register slash commands: /startstock and /stopstock
-client.on('ready', async () => {
-    const data = [
-        {
-            name: 'startstock',
-            description: 'Starts the stock market with custom values',
-            options: [
-                {
-                    name: 'customstocks',
-                    type: 3, 
-                    description: 'Enter stock values in the format: "500 USD\\n1000 EUR" or "500USD 1000EUR"',
-                    required: true,
-                },
-            ],
-        },
-        {
-            name: 'stopstock',
-            description: 'Stops the stock market',
-        },
-    ];
-
-    const commands = await client.application.commands.set(data);
-    console.log(`Registered commands: ${commands.map(c => c.name).join(', ')}`);
+    else if (commandName === 'teststock') {
+        const stockDate = moment().tz(TIMEZONE); // Get today's date
+        const formattedDate = stockDate.format('DD/MM');
+    
+        const stockForToday = customStocks.find((stock, index) => {
+            const stockDate = moment().tz(TIMEZONE).add(index, 'days').format('DD/MM');
+            return stockDate === formattedDate;
+        });
+    
+        if (!stockForToday) {
+            await interaction.reply('No stock data is available for testing. Start the market first.');
+            return;
+        }
+    
+        const { amount, currency } = stockForToday;
+        const roleIdToPing = '1244051080699052064'; // Role to ping
+        const formattedTitle = `VOTW ${stockDate.format('MMMM')} ${stockDate.format('Do')}`;
+    
+        const embed = new EmbedBuilder()
+            .setTitle(formattedTitle)
+            .setDescription(`On **${formattedDate}**, the stock price is **${amount} ${currency}**`)
+            .setColor('#FF92C3')
+            .setTimestamp();
+    
+        // Send test post to the target channel
+        const channel = client.channels.cache.get(targetChannelId); // Send to the target channel for test
+        await channel.send({ content: `<@&${roleIdToPing}>`, embeds: [embed] });
+    
+        await interaction.reply('Test stock update has been posted.');
+    }
 });
 
 client.login(process.env.BOT_TOKEN);
-
-//Made by Vanesa Smite aka Captain Eivroit - https://captaineivroit.com/
