@@ -101,7 +101,7 @@ function showStockList(channel) {
     .join("\n");
 
   const embed = new EmbedBuilder()
-    .setTitle("Custom Stock List")
+    .setTitle("Stock List")
     .setDescription(stockList)
     .setColor("#FF92C3")
     .setTimestamp();
@@ -113,7 +113,7 @@ function startMarket(channel, customInput) {
   customStocks = parseCustomStocks(customInput);
   if (customStocks.length === 0) {
     channel.send(
-      "No valid stocks provided. Please enter them in the format: `500 USD` or `1000 EUR`."
+      "No valid stocks provided. Please enter them in the format: `500 FEIN` or `1000 STARSHARDS`."
     );
     return;
   }
@@ -171,7 +171,7 @@ client.once("ready", async () => {
           name: "customstocks",
           type: 3,
           description:
-            'Enter stock values in the format: "500 USD\\n1000 EUR" or "500USD 1000EUR"',
+            'Enter stock values in the format: "500 FEIN\\n1000 STARSHARDS" or "500FEIN 1000STARSHARDS"',
           required: true,
         },
       ],
